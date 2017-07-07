@@ -44,6 +44,38 @@ int main (int argc, char *argv[]) {
     fread(&bitmapInfoHeader, sizeof(BitmapInfoHeader), 1, filePtr);
     
     // Read pixel data
-    
-   return 0;
+    unsigned char pixelData[bitmapInfoHeader.imageDataSize];
+    fseek(filePtr, bitmapFileHeader.imageDataOffset, SEEK_SET);
+    fread(pixelData, sizeof(pixelData), 1, filePtr);
+
+    // Do test operation on the pixel data
+    // For now, assume 24 bit color
+
+    // A counter to loop through all of the pixel data
+    int i = 0;
+
+    // A counter for the current byte in the current row of pixel data
+    int rowByteCounter = 0;
+
+    // Each row is padded so that its number of bytes is a multiple of 4
+    int rowPadding = 4 - (bitmapInfoHeader.imageWidth * 3 % 4);
+
+    while(i < sizeof(pixelData))
+    {
+        printf("%02x ", pixelData[i]);
+        printf("%d, ", i);
+
+        // If at the end of the row's meaningful data, skip past any padding
+        if ((rowByteCounter + 1) % (bitmapInfoHeader.imageWidth * 3) == 0)
+        {
+            i += (rowPadding + 1);
+            rowByteCounter = 0;
+        } else 
+        {
+            i++;
+            rowByteCounter++;
+        }
+    }
+
+    return 0;
 }
