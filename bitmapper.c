@@ -51,31 +51,41 @@ int main (int argc, char *argv[]) {
     // Do test operation on the pixel data
     // For now, assume 24 bit color
 
-    // A counter to loop through all of the pixel data
-    int i = 0;
 
     // A counter for the current byte in the current row of pixel data
     int rowByteCounter = 0;
 
     // Each row is padded so that its number of bytes is a multiple of 4
-    int rowPadding = 4 - (bitmapInfoHeader.imageWidth * 3 % 4);
+    int rowPadding = 0;
+    int bytesPerRow = bitmapInfoHeader.imageWidth * 3;
+    if (bytesPerRow % 4 != 0)
+    {
+        rowPadding = 4 - (bytesPerRow % 4);
+    }
 
+    int i = 0;
+    int pixelInRow = 0;
     while(i < sizeof(pixelData))
     {
-        printf("%02x ", pixelData[i]);
-        printf("%d, ", i);
-
-        // If at the end of the row's meaningful data, skip past any padding
-        if ((rowByteCounter + 1) % (bitmapInfoHeader.imageWidth * 3) == 0)
+        int averageColor = (pixelData[i] + pixelData[i + 1] + pixelData[i + 2]) / 3;
+        pixelData[i] = averageColor;
+        pixelData[i + 1] = averageColor;
+        pixelData[i + 2] = averageColor;
+        if (pixelInRow == bitmapInfoHeader.imageWidth - 1)
         {
-            i += (rowPadding + 1);
-            rowByteCounter = 0;
-        } else 
+            i += rowPadding + 3;
+            pixelInRow = 0;
+        } else
         {
-            i++;
-            rowByteCounter++;
+            i += 3;
+            pixelInRow ++;
         }
     }
+
+    fseek(filePtr, bitmapFileHeader.imageDataOffset, SEEK_SET);
+    fwrite(pixelData, 1, sizeof(pixelData), filePtr);
+
+    fclose(filePtr);
 
     return 0;
 }
